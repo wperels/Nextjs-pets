@@ -1,10 +1,14 @@
 import Pusher from "pusher-js"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
 export default function Chat() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [socketId, setSocketId] = useState()
+  const [messageLog, setMessageLog] = useState([])
+  const [userMessage, setUserMessage] = useState([""])
+  const chatField = useRef(null)
+  const chatLogElement = useRef(null)
 
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHERKEY, {
@@ -13,15 +17,33 @@ export default function Chat() {
     pusher.connection.bind("connected", () => {
       setSocketId(pusher.connection.socket_id)
     })
+
     const channel = pusher.subscribe("private-petchat")
     channel.bind("message", (data) => {
-      console.log("message")
+      // When a new message is received, we update the message log
+      // by taking the previous state and adding the new message (data) to it
+      setMessageLog(prev => [...prev, data])
     })
-  }, [])
+  }, []) //   This empty array [] is a dependency list for the useEffect hook. 
+         //   It means that the effect will only run once, when the component mounts, and not on any subsequent re-renders. 
+        //    This is because we don't want to establish a new Pusher connection and bind new event listeners every time the component is re-rendered. 
+        //    Instead, we want to establish the connection and bind the event listeners only once when the component is mounted.
+
+useEffect(() => {
+  if (messageLog.length) {
+    chatLogElement.current.scrollTop = chatLogElement.current.scrollHeight
+    if (!isChatOpen) {
+      setUnreadCount(prev => prev + 1)
+    }
+  }
+}, [messageLog])
 
   function openChatClick() {
     setIsChatOpen(true)
     setUnreadCount(0)
+    setTimeout(() => {
+      chatField.current.focus()
+    }, 350)
   }
 
   function closeChatClick() {
@@ -35,10 +57,15 @@ function handleChatSubmit(e) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ message: "hello", socket_id: socketId })  
+    body: JSON.stringify({ message: userMessage, socket_id: socketId })  
   })
-}
+    setMessageLog(prev => [...prev, { selfMessage: true, message: userMessage }])
+    setUserMessage("")
+  }
 
+function handleInputChange(e) {
+  setUserMessage(e.target.value.trim())
+}
 
   return (
     <>
@@ -56,25 +83,17 @@ function handleChatSubmit(e) {
             <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm3.354 4.646L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 1 1 .708-.708" />
           </svg>
         </div>
-        <div className="chat-log">
-          <div className="chat-message">
-            <div className="chat-message-inner">We need to reach out for the latest contact for Purrsloud.</div>
-          </div>
-          <div className="chat-message">
-            <div className="chat-message-inner">Bob, can you do that?</div>
-          </div>
-          <div className="chat-message">
-            <div className="chat-message-inner">We need to reach out for the latest contact for Purrsloud.</div>
-          </div>
-          <div className="chat-message">
-            <div className="chat-message-inner">Bob, can you do that?</div>
-          </div>
-          <div className="chat-message chat-message--self">
-            <div className="chat-message-inner">Lorem ipsum dolor sit amet consectetur adipisicing elit. Nulla laboriosam ad consectetur hic aperiam aut veniam consequatur veritatis aspernatur voluptas, iure expedita deleniti nemo, repellendus inventore recusandae quis assumenda aliquam?</div>
-          </div>
+        <div ref={chatLogElement} className="chat-log">
+          {messageLog.map((item, index) => {
+            return (
+              <div key={index} className={ item.selfMessage ? "chat-message chat-message--self" : "chat-message"}>
+              <div className="chat-message-inner">{item.message}</div>
+             </div>
+            )
+          } )}
         </div>
         <form onSubmit={handleChatSubmit}>
-          <input type="text" autoComplete="off" placeholder="Your message here" />
+          <input value={userMessage} ref={chatField} onChange={handleInputChange} type="text" autoComplete="off" placeholder="Your message here" />
         </form>
       </div>
     </>
