@@ -9,15 +9,16 @@ export async function POST(request) {
   if (adminCookie == process.env.SESSIONCOOKIEVALUE) {
     const pusher = new Pusher({
       appId: process.env.PUSHERID,
-      key: process.env.PUSHERKEY,
+      key: process.env.NEXT_PUBLIC_PUSHERKEY,
       secret: process.env.PUSHERSECRET,
-      cluster: "us3",
+      cluster: "us2",
       useTLS: true
     })
 
     const ourData = await request.formData()
     const theSocketId = ourData.get("socket_id")
-    const authResponse = pusher.authorizeChannel(theSocketId, "private-petchat")
+    //const authResponse = pusher.authorizeChannel(theSocketId, "private-petchat")
+    const authResponse = await pusher.authorizeChannel(theSocketId, "private-petchat")
     return NextResponse.json(authResponse)
   }
 
