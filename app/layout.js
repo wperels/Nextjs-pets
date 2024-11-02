@@ -10,8 +10,8 @@ export const metadata = {
   description: "The best local pet adoption center."
 }
 
-export default function RootLayout({ children }) {
-  const cookieStore = cookies()
+export default async function RootLayout({ children }) {
+  const cookieStore = await cookies()
   const adminCookie = cookieStore.get("petadoption") ? cookieStore.get("petadoption").value : ""
 
   const isAdmin = adminCookie == process.env.SESSIONCOOKIEVALUE

@@ -25,7 +25,8 @@ async function fetchPetAndContacts(id) {
   return { pet: undefined, contacts: undefined }
 }
 
-const EditPage = async ({ params }) => {
+const EditPage = async props => {
+  const params = await props.params;
   const { pet, contacts } = await fetchPetAndContacts(params.id)
 
   if (!pet) {

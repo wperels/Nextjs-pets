@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 const Pusher = require("pusher")
 
 export async function POST(request) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const adminCookie = cookieStore.get("petadoption") ? cookieStore.get("petadoption").value : ""
 
   if (adminCookie == process.env.SESSIONCOOKIEVALUE) {

@@ -3,7 +3,8 @@ import { NextResponse } from "next/server"
 
 export function middleware(request) {
   if (request.url.includes("/admin")) {
-    const cookieStore = cookies()
+    const cookieStore = /* @next-codemod-error Manually await this call and refactor the function to be async */
+    cookies()
     const adminCookie = cookieStore.get("petadoption") ? cookieStore.get("petadoption").value : ""
 
     if (adminCookie == process.env.SESSIONCOOKIEVALUE) {
